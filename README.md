@@ -4,7 +4,7 @@ Real-time fraud-detection MLOps service: streaming transaction scoring via
 FastAPI, online learning with drift detection and auto-retrain, and a live
 latency/drift dashboard.
 
-> Day 1 of 7 — scaffold, scoring API, and baseline model. Full README
+> Day 2 of 7 — streaming ingest via Redpanda. Full README
 > (architecture, setup, evaluation, roadmap) lands on Day 7.
 
 ## Quickstart
@@ -28,6 +28,18 @@ curl -X POST http://localhost:8000/score -H "Content-Type: application/json" -d 
 }'
 ```
 
+## Streaming (Day 2)
+
+```powershell
+docker compose up -d        # Redpanda + Console + API (stop standalone redpanda-1 first: docker stop redpanda-1)
+python scripts/produce_transactions.py --count 50
+python scripts/consume_and_score.py --max-messages 50
+```
+
+- Producer publishes synthetic transactions to the `transactions` topic.
+- Consumer scores each message through the same scoring path as `POST /score`.
+- Redpanda Console (topic browser) at http://localhost:8080.
+
 ## Run tests
 
 ```bash
@@ -41,11 +53,15 @@ app/
   main.py        # FastAPI app: /health, /score
   schemas.py     # Pydantic transaction + response models
   model.py       # feature engineering + model loading/scoring
+  streaming.py   # Redpanda topic, message codec, Kafka client factories
   models/        # trained artifacts (baseline_model.joblib)
 scripts/
   train_baseline.py  # synthetic data generation + training
+  produce_transactions.py  # Day 2: publish synthetic txns to Redpanda
+  consume_and_score.py     # Day 2: consume + score off the topic
 tests/
   test_api.py    # schema, endpoint, and edge-case tests
+  test_streaming.py  # Day 2: message codec + produce/consume/score round trip
 ```
 
 ## Roadmap

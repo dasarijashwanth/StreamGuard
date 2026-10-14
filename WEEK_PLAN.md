@@ -20,7 +20,7 @@ latency/drift dashboard.
 - `requirements.txt`, `.gitignore`, `Dockerfile`, README skeleton
 - pytest suite: schema validation, `/health`, `/score` happy path + edge cases
 
-## Day 2 — Wed Oct 14: Streaming ingest (Redpanda)
+## Day 2 — Wed Oct 14: Streaming ingest (Redpanda) ✅
 - `docker-compose.yml`: Redpanda broker + console, API service
 - Producer script emitting synthetic transactions to a `transactions` topic
 - Consumer wiring transactions into the scoring path
