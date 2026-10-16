@@ -72,3 +72,22 @@ class DriftStatus(BaseModel):
     drift_detected: bool
     retrain_requested: bool
     model_version: str
+
+
+class ModelEntry(BaseModel):
+    """One registry entry: champion or challenger (GET /models)."""
+
+    version: str
+    status: str = Field(description="champion, challenger, promoted, or rejected")
+    auc: float | None = None
+    precision: float | None = None
+    recall: float | None = None
+    p50_latency_ms: float | None = None
+
+
+class ModelsResponse(BaseModel):
+    """Champion/challenger registry snapshot (GET /models)."""
+
+    champion: ModelEntry | None = None
+    challenger: ModelEntry | None = None
+    registry_version: str

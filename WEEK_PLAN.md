@@ -33,11 +33,11 @@ latency/drift dashboard.
 - Unit tests for drift detector behavior on synthetic concept drift
 - `POST /feedback` (labeled transaction in) + `GET /drift` (status out)
 
-## Day 4 — Fri Oct 16: MLflow + batch XGBoost challenger
-- MLflow tracking server (docker-compose service)
-- Nightly batch job: train XGBoost on accumulated labeled data, log params/metrics
+## Day 4 — Fri Oct 16: MLflow + batch XGBoost challenger ✅
+- MLflow tracking server (docker-compose service, port 5000, sqlite backend)
+- Batch job: train XGBoost on accumulated labeled data, log params/metrics
 - Champion/challenger comparison (AUC, latency); promotion rule
-- API gains model-selection header (`X-Model-Version`)
+- API gains model-selection header (`X-Model-Version`) + `GET /models`
 
 ## Day 5 — Sat Oct 17: Streamlit live dashboard
 - Live fraud-rate, latency p50/p99, and drift-status panels

@@ -4,8 +4,9 @@ Real-time fraud-detection MLOps service: streaming transaction scoring via
 FastAPI, online learning with drift detection and auto-retrain, and a live
 latency/drift dashboard.
 
-> Day 3 of 7 — online learning with River + ADWIN drift detection. Full README
-> (architecture, setup, evaluation, roadmap) lands on Day 7.
+> Day 4 of 7 — MLflow tracking + XGBoost challenger with a conservative
+> promotion rule. Full README (architecture, setup, evaluation, roadmap)
+> lands on Day 7.
 
 ## Quickstart
 
@@ -56,6 +57,27 @@ curl http://localhost:8000/drift
 - ADWIN watches the prediction-error stream; confirmed drift raises a retrain request and versions a new candidate in the model registry.
 - The batch retrain itself lands on Day 4 with MLflow.
 
+## MLflow + XGBoost challenger (Day 4)
+
+```bash
+docker compose up -d mlflow   # tracking server + UI at http://localhost:5000
+python scripts/train_challenger.py [--data labeled.csv] [--tracking-uri URI]
+curl http://localhost:8000/models
+```
+
+- The challenger trains XGBoost on accumulated labeled data (or reproducible
+  synthetic data, seed=42, when no CSV is given) and logs params, metrics
+  (AUC, precision, recall, per-score latency), and the model artifact to
+  MLflow when the server is reachable. Without a server it falls back to
+  local logging: `evals/challenger_metrics.json`. It never crashes for lack
+  of MLflow.
+- Promotion rule: the challenger is promoted only if its AUC beats the
+  champion by at least 0.005 AND its p50 latency is at most 1.2x the
+  champion's. Promotion bumps the registry version.
+- `POST /score` now sends the serving model version as an
+  `X-Model-Version` response header (also in the JSON body).
+- `GET /models` lists the champion, the latest challenger, and their status.
+
 ## Run tests
 
 ```bash
@@ -66,19 +88,24 @@ pytest -q
 
 ```
 app/
-  main.py        # FastAPI app: /health, /score
+  main.py        # FastAPI app: /health, /score, /feedback, /drift, /models
   schemas.py     # Pydantic transaction + response models
   model.py       # feature engineering + model loading/scoring
   online.py      # Day 3: River online learner, ADWIN drift, registry
+  challenger.py  # Day 4: champion/challenger compare + promotion rule
   streaming.py   # Redpanda topic, message codec, Kafka client factories
   models/        # trained artifacts (baseline_model.joblib)
 scripts/
   train_baseline.py  # synthetic data generation + training
+  train_challenger.py  # Day 4: XGBoost challenger + MLflow logging
   produce_transactions.py  # Day 2: publish synthetic txns to Redpanda
   consume_and_score.py     # Day 2: consume + score off the topic
+evals/
+  challenger_metrics.json  # Day 4: latest challenger run (local fallback)
 tests/
   test_api.py    # schema, endpoint, and edge-case tests
   test_online.py # Day 3: learner improvement, ADWIN drift, retrain trigger
+  test_challenger.py  # Day 4: promotion rule, challenger run, /models
   test_streaming.py  # Day 2: message codec + produce/consume/score round trip
 ```
 
