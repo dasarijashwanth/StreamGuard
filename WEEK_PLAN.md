@@ -26,11 +26,12 @@ latency/drift dashboard.
 - Consumer wiring transactions into the scoring path
 - Integration test: produce → consume → score round trip
 
-## Day 3 — Thu Oct 15: Online learning + drift detection
+## Day 3 — Thu Oct 15: Online learning + drift detection ✅
 - River `LogisticRegression` online learner shadowing the batch model
 - ADWIN drift detector on prediction error stream
 - Auto-retrain trigger when drift is confirmed; model registry versioning
 - Unit tests for drift detector behavior on synthetic concept drift
+- `POST /feedback` (labeled transaction in) + `GET /drift` (status out)
 
 ## Day 4 — Fri Oct 16: MLflow + batch XGBoost challenger
 - MLflow tracking server (docker-compose service)

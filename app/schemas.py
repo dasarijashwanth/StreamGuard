@@ -53,3 +53,22 @@ class ScoreResponse(BaseModel):
     model_version: str
     threshold: float
     latency_ms: float = Field(description="Server-side scoring time in milliseconds.")
+
+
+class FeedbackRequest(BaseModel):
+    """A scored transaction plus its true label, for online learning (Day 3)."""
+
+    transaction: Transaction
+    label: bool = Field(description="True when the transaction was actually fraud.")
+
+
+class DriftStatus(BaseModel):
+    """Snapshot of drift detection + registry state (GET /drift)."""
+
+    samples_seen: int
+    errors: int
+    error_rate: float
+    drift_events: int
+    drift_detected: bool
+    retrain_requested: bool
+    model_version: str

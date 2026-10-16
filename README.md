@@ -4,7 +4,7 @@ Real-time fraud-detection MLOps service: streaming transaction scoring via
 FastAPI, online learning with drift detection and auto-retrain, and a live
 latency/drift dashboard.
 
-> Day 2 of 7 — streaming ingest via Redpanda. Full README
+> Day 3 of 7 — online learning with River + ADWIN drift detection. Full README
 > (architecture, setup, evaluation, roadmap) lands on Day 7.
 
 ## Quickstart
@@ -40,6 +40,22 @@ python scripts/consume_and_score.py --max-messages 50
 - Consumer scores each message through the same scoring path as `POST /score`.
 - Redpanda Console (topic browser) at http://localhost:8080.
 
+## Online learning + drift detection (Day 3)
+
+```bash
+# Feed a labeled transaction to the River shadow learner
+curl -X POST http://localhost:8000/feedback -H "Content-Type: application/json" -d '{
+  "transaction": {"amount": 499.99, "merchant_category": "online_retail", "hour_of_day": 3, "card_present": false},
+  "label": true
+}'
+# Check drift + registry status
+curl http://localhost:8000/drift
+```
+
+- River `LogisticRegression` learns from every labeled transaction, shadowing the batch model.
+- ADWIN watches the prediction-error stream; confirmed drift raises a retrain request and versions a new candidate in the model registry.
+- The batch retrain itself lands on Day 4 with MLflow.
+
 ## Run tests
 
 ```bash
@@ -53,6 +69,7 @@ app/
   main.py        # FastAPI app: /health, /score
   schemas.py     # Pydantic transaction + response models
   model.py       # feature engineering + model loading/scoring
+  online.py      # Day 3: River online learner, ADWIN drift, registry
   streaming.py   # Redpanda topic, message codec, Kafka client factories
   models/        # trained artifacts (baseline_model.joblib)
 scripts/
@@ -61,6 +78,7 @@ scripts/
   consume_and_score.py     # Day 2: consume + score off the topic
 tests/
   test_api.py    # schema, endpoint, and edge-case tests
+  test_online.py # Day 3: learner improvement, ADWIN drift, retrain trigger
   test_streaming.py  # Day 2: message codec + produce/consume/score round trip
 ```
 

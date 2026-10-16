@@ -5,7 +5,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 
 from app.model import load_bundle, score_transaction
-from app.schemas import ScoreResponse, Transaction
+from app.online import get_online_learner
+from app.schemas import DriftStatus, FeedbackRequest, ScoreResponse, Transaction
 
 
 @asynccontextmanager
@@ -52,4 +53,29 @@ def score(txn: Transaction) -> ScoreResponse:
         model_version=version,
         threshold=threshold,
         latency_ms=round(latency_ms, 3),
+    )
+
+
+@app.post("/feedback")
+def feedback(req: FeedbackRequest) -> dict:
+    """Feed one labeled transaction to the online learner (Day 3).
+
+    Updates the River shadow model, checks ADWIN drift, and triggers a
+    retrain request + registry version bump when drift is confirmed.
+    """
+    return get_online_learner().learn(req.transaction, req.label)
+
+
+@app.get("/drift", response_model=DriftStatus)
+def drift_status() -> DriftStatus:
+    """Current drift detection + model registry snapshot."""
+    status = get_online_learner().status()
+    return DriftStatus(
+        samples_seen=status["samples_seen"],
+        errors=status["errors"],
+        error_rate=status["error_rate"],
+        drift_events=status["drift_events"],
+        drift_detected=status["drift_detected"],
+        retrain_requested=status["retrain_requested"],
+        model_version=str(status["model_version"]),
     )
