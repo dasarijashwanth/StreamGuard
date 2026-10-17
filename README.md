@@ -4,8 +4,8 @@ Real-time fraud-detection MLOps service: streaming transaction scoring via
 FastAPI, online learning with drift detection and auto-retrain, and a live
 latency/drift dashboard.
 
-> Day 5 of 7 — Streamlit live dashboard reading GET /metrics, /drift, and
-> /models. Full README (architecture, setup, evaluation, roadmap)
+> Day 6 of 7 — holdout evaluation + latency benchmarks, results in
+> `evals/`. Full README (architecture, setup, evaluation, roadmap)
 > lands on Day 7.
 
 ## Quickstart
@@ -108,6 +108,26 @@ streamlit run dashboard/app.py   # dashboard at http://localhost:8501
 pytest -q
 ```
 
+## Evaluation + latency benchmarks (Day 6)
+
+```bash
+python scripts/evaluate.py            # holdout metrics + latency -> evals/day6_results.json, evals/evaluation.md
+python scripts/benchmark_latency.py   # latency only, add --save to merge into evals/day6_results.json
+```
+
+- The holdout uses seed 123 (training used seed 42), so it is data the
+  champion never saw. Measured on this run: AUC **0.9990**,
+  precision 0.9927 / recall 0.9067 at threshold 0.5, calibration error
+  (ECE) 0.0037.
+- Latency on this run: in-process single-score p50 0.103ms / p99 0.143ms
+  (9,286 req/s); HTTP `POST /score` p50 1.128ms / p99 2.772ms (777 req/s)
+  over 1,000 requests each.
+- Regression gate: `tests/test_regression_gate.py` fails the suite if a
+  future model swap scores AUC below the committed result minus 0.01, or
+  precision at 0.5 below the committed result minus 0.05 (floored at
+  0.90). Re-run `scripts/evaluate.py` after any model change to refresh
+  the committed baseline.
+
 ## Project layout
 
 ```
@@ -119,6 +139,8 @@ app/
   challenger.py  # Day 4: champion/challenger compare + promotion rule
   metrics.py     # Day 5: in-memory scoring metrics for GET /metrics
   streaming.py   # Redpanda topic, message codec, Kafka client factories
+  evaluate.py    # Day 6: holdout metrics, calibration, latency benchmarks
+  synthetic.py   # Day 6: reproducible synthetic transaction generator
   models/        # trained artifacts (baseline_model.joblib)
 dashboard/
   app.py         # Day 5: Streamlit live dashboard UI
@@ -126,16 +148,23 @@ dashboard/
 scripts/
   train_baseline.py  # synthetic data generation + training
   train_challenger.py  # Day 4: XGBoost challenger + MLflow logging
+  evaluate.py        # Day 6: holdout eval + latency -> evals/
+  benchmark_latency.py  # Day 6: latency-only re-run
   produce_transactions.py  # Day 2: publish synthetic txns to Redpanda
   consume_and_score.py     # Day 2: consume + score off the topic
 evals/
   challenger_metrics.json  # Day 4: latest challenger run (local fallback)
+  day6_results.json        # Day 6: committed holdout + latency results
+  evaluation.md            # Day 6: human-readable results table
 tests/
   test_api.py    # schema, endpoint, and edge-case tests
   test_online.py # Day 3: learner improvement, ADWIN drift, retrain trigger
   test_challenger.py  # Day 4: promotion rule, challenger run, /models
   test_metrics.py     # Day 5: /metrics endpoint + metrics collector
   test_dashboard.py   # Day 5: dashboard data helpers (no Streamlit server)
+  test_evaluation.py  # Day 6: metric math on hand-computed datasets
+  test_benchmark.py   # Day 6: latency benchmark smoke tests
+  test_regression_gate.py  # Day 6: champion must clear committed baseline
   test_streaming.py  # Day 2: message codec + produce/consume/score round trip
 ```
 
@@ -143,4 +172,4 @@ tests/
 
 Day 2: Redpanda streaming ingest · Day 3: River online learning + drift
 detection · Day 4: MLflow + XGBoost challenger · Day 5: Streamlit dashboard ✅ ·
-Day 6: evaluation + latency benchmarks · Day 7: full README + polish.
+Day 6: evaluation + latency benchmarks ✅ · Day 7: full README + polish.

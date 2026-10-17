@@ -45,9 +45,9 @@ latency/drift dashboard.
 - Reads from Redpanda topic / API metrics endpoint
 - One-command `docker-compose up` demo
 
-## Day 6 — Sun Oct 18: Evaluation + latency benchmarks
+## Day 6 — Sun Oct 18: Evaluation + latency benchmarks ✅
 - Holdout evaluation harness: AUC, precision/recall @ thresholds, calibration
-- Latency benchmark: single-score p50/p99, 1k-rps throughput test
+- Latency benchmark: single-score p50/p99, 1k-request throughput test
 - Results table committed to `evals/`; regression gate for future model swaps
 
 ## Day 7 — Mon Oct 19: Full README, Dockerfile polish, final review
