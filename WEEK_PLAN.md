@@ -39,7 +39,7 @@ latency/drift dashboard.
 - Champion/challenger comparison (AUC, latency); promotion rule
 - API gains model-selection header (`X-Model-Version`) + `GET /models`
 
-## Day 5 — Sat Oct 17: Streamlit live dashboard
+## Day 5 — Sat Oct 17: Streamlit live dashboard ✅
 - Live fraud-rate, latency p50/p99, and drift-status panels
 - Score distribution + recent flagged transactions table
 - Reads from Redpanda topic / API metrics endpoint

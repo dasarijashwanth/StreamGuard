@@ -1,5 +1,6 @@
 # Day 2 streaming: Redpanda broker + Console + API service.
 # Day 4: MLflow tracking server (optional — API and pytest run fine without it).
+# Day 5: Streamlit dashboard at http://localhost:8501.
 #
 # Usage (Windows PowerShell, Docker Desktop running):
 #   docker compose up -d        # start all services
@@ -11,6 +12,7 @@
 # - Run `python scripts/train_baseline.py` once before `compose up`: the model
 #   artifact is gitignored, so the API image needs it present locally.
 # - Console (topic browser) at http://localhost:8080, API at http://localhost:8000.
+# - Dashboard at http://localhost:8501.
 # - MLflow UI at http://localhost:5000. scripts/train_challenger.py logs there
 #   when the server is reachable and falls back to evals/challenger_metrics.json.
 
@@ -46,6 +48,23 @@ services:
       - redpanda
     ports:
       - "8000:8000"
+
+  dashboard:
+    build: .
+    depends_on:
+      - api
+    environment:
+      API_BASE_URL: http://api:8000
+    ports:
+      - "8501:8501"
+    command:
+      - streamlit
+      - run
+      - dashboard/app.py
+      - --server.port
+      - "8501"
+      - --server.address
+      - 0.0.0.0
 
   mlflow:
     image: ghcr.io/mlflow/mlflow:latest

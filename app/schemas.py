@@ -5,7 +5,7 @@ Day 1 covers the core transaction + scoring contracts. Streaming envelopes
 on Days 2-3 without breaking existing fields.
 """
 
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -91,3 +91,24 @@ class ModelsResponse(BaseModel):
     champion: ModelEntry | None = None
     challenger: ModelEntry | None = None
     registry_version: str
+
+
+class RecentScore(BaseModel):
+    """One scored transaction, as kept by the metrics collector (Day 5)."""
+
+    transaction_id: Optional[str] = None
+    fraud_probability: float = Field(ge=0.0, le=1.0)
+    is_fraud: bool
+    latency_ms: float
+    threshold: float
+
+
+class MetricsResponse(BaseModel):
+    """Aggregate scoring metrics + recent scores (GET /metrics, Day 5)."""
+
+    total_scored: int
+    fraud_count: int
+    fraud_rate: float = Field(ge=0.0, le=1.0)
+    p50_latency_ms: Optional[float] = None
+    p99_latency_ms: Optional[float] = None
+    recent: List[RecentScore] = []

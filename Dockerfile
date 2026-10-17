@@ -7,7 +7,9 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code (includes the pre-trained baseline model)
+# plus the dashboard (the dashboard service runs from the same image)
 COPY app/ ./app/
+COPY dashboard/ ./dashboard/
 
 EXPOSE 8000
 

@@ -5,11 +5,13 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Response
 
 from app.challenger import get_challenger_registry
+from app.metrics import get_metrics
 from app.model import load_bundle, score_transaction
 from app.online import get_online_learner
 from app.schemas import (
     DriftStatus,
     FeedbackRequest,
+    MetricsResponse,
     ModelEntry,
     ModelsResponse,
     ScoreResponse,
@@ -56,6 +58,13 @@ def score(txn: Transaction, response: Response) -> ScoreResponse:
     """
     probability, is_fraud, version, threshold, latency_ms = score_transaction(txn)
     response.headers["X-Model-Version"] = version
+    get_metrics().record(
+        transaction_id=txn.transaction_id,
+        fraud_probability=probability,
+        is_fraud=is_fraud,
+        latency_ms=latency_ms,
+        threshold=threshold,
+    )
     return ScoreResponse(
         transaction_id=txn.transaction_id,
         fraud_probability=round(probability, 4),
@@ -89,6 +98,13 @@ def drift_status() -> DriftStatus:
         retrain_requested=status["retrain_requested"],
         model_version=str(status["model_version"]),
     )
+
+
+@app.get("/metrics", response_model=MetricsResponse)
+def metrics() -> MetricsResponse:
+    """Aggregate scoring metrics + recent scores for the dashboard (Day 5)."""
+    snap = get_metrics().snapshot()
+    return MetricsResponse(**snap)
 
 
 @app.get("/models", response_model=ModelsResponse)
