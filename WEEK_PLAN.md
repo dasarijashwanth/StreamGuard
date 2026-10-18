@@ -50,7 +50,7 @@ latency/drift dashboard.
 - Latency benchmark: single-score p50/p99, 1k-request throughput test
 - Results table committed to `evals/`; regression gate for future model swaps
 
-## Day 7 — Mon Oct 19: Full README, Dockerfile polish, final review
+## Day 7 — Mon Oct 19: Full README, Dockerfile polish, final review ✅
 - Complete README: overview, features, architecture diagram, setup, usage,
   evaluation results, roadmap
 - Multi-stage Dockerfile, `.dockerignore`, compose profiles

@@ -4,9 +4,25 @@ Real-time fraud-detection MLOps service: streaming transaction scoring via
 FastAPI, online learning with drift detection and auto-retrain, and a live
 latency/drift dashboard.
 
-> Day 6 of 7 — holdout evaluation + latency benchmarks, results in
-> `evals/`. Full README (architecture, setup, evaluation, roadmap)
-> lands on Day 7.
+> Complete 7-day build. Test suite: 50 passed, 1 skipped (broker
+> integration, needs Docker).
+
+## Architecture
+
+```
+Synthetic producer -> Redpanda `transactions` topic -> consumer
+  -> FastAPI POST /score (LogisticRegression champion)
+  -> River shadow learner + ADWIN drift detector
+  -> MLflow / XGBoost challenger + model registry
+  -> Streamlit dashboard reading /health, /metrics, /drift, /models
+```
+
+## Prerequisites
+
+- Python 3.12 (local `.venv` works; see Quickstart)
+- Docker + `docker compose` for Redpanda, MLflow, and the dashboard
+- Windows PowerShell: stop any standalone `redpanda-1` container first
+  (`docker stop redpanda-1`) to avoid a port 9092 conflict.
 
 ## Quickstart
 
@@ -128,6 +144,19 @@ python scripts/benchmark_latency.py   # latency only, add --save to merge into e
   0.90). Re-run `scripts/evaluate.py` after any model change to refresh
   the committed baseline.
 
+## Limitations
+
+- All data is synthetic (seed 42 for training, seed 123 for the holdout),
+  so the near-perfect AUC (holdout 0.9990) reflects a cleanly separable
+  toy problem, not real fraud data.
+- The challenger was NOT promoted: champion AUC 0.9999 vs challenger
+  0.9998 missed the +0.005 promotion margin. Real promotion needs
+  messier labeled data.
+- `GET /metrics` is in-memory, bounded to the last 500 scores, and resets
+  when the API restarts; nothing is persisted.
+- The challenger falls back to local `evals/challenger_metrics.json` when
+  no MLflow server is reachable.
+
 ## Project layout
 
 ```
@@ -170,6 +199,7 @@ tests/
 
 ## Roadmap
 
-Day 2: Redpanda streaming ingest · Day 3: River online learning + drift
-detection · Day 4: MLflow + XGBoost challenger · Day 5: Streamlit dashboard ✅ ·
-Day 6: evaluation + latency benchmarks ✅ · Day 7: full README + polish.
+Day 2: Redpanda streaming ingest ✅ · Day 3: River online learning + drift
+detection ✅ · Day 4: MLflow + XGBoost challenger ✅ · Day 5: Streamlit
+dashboard ✅ · Day 6: evaluation + latency benchmarks ✅ · Day 7: full
+README + polish ✅.
