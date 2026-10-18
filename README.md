@@ -1,11 +1,42 @@
 # StreamGuard
 
-Real-time fraud-detection MLOps service: streaming transaction scoring via
-FastAPI, online learning with drift detection and auto-retrain, and a live
-latency/drift dashboard.
+**A real-time fraud-detection MLOps service.** Transactions stream through
+Redpanda into a FastAPI scoring API; a River online learner shadows the
+batch model with ADWIN drift detection and an auto-retrain trigger; an
+MLflow-tracked XGBoost challenger competes against the champion under a
+strict promotion rule; and a Streamlit dashboard watches fraud rate,
+latency, drift, and model versions live.
 
 > Complete 7-day build. Test suite: 50 passed, 1 skipped (broker
 > integration, needs Docker).
+
+## Features
+
+- **Real-time scoring API** — FastAPI `POST /score` scores a transaction
+  in ~1ms (p50) with the serving model version in an `X-Model-Version`
+  header.
+- **Streaming ingest** — synthetic producer publishes to a Redpanda
+  `transactions` topic; the consumer scores each message through the same
+  path as `POST /score`.
+- **Online learning + drift detection** — River `LogisticRegression`
+  learns from labeled feedback via `POST /feedback`; ADWIN watches the
+  error stream and versions a retrain candidate in the model registry when
+  drift is confirmed.
+- **Champion/challenger with MLflow** — an XGBoost challenger trains on
+  accumulated labels (or seeded synthetic data), logs to MLflow, and is
+  promoted only if AUC beats the champion by 0.005+ with p50 latency at
+  most 1.2x. The challenger was honestly rejected on synthetic data
+  (0.9998 vs 0.9999), which is the correct behavior.
+- **Live dashboard** — Streamlit panels for total scored, fraud rate,
+  latency p50/p99, drift status, champion/challenger versions, score
+  distribution, and flagged transactions, backed by an in-memory
+  `GET /metrics` collector.
+- **Evaluation + regression gate** — holdout eval (seed 123, unseen by
+  training) reports AUC 0.9990, precision 0.9927 / recall 0.9067 at
+  threshold 0.5, ECE 0.0037; the test suite fails if a future model swap
+  drops below the committed baseline.
+- **Fully reproducible** — every dataset is seeded synthetic data;
+  `scripts/train_baseline.py` regenerates everything from scratch.
 
 ## Architecture
 
